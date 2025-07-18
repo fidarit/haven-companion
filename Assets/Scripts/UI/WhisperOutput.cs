@@ -1,26 +1,19 @@
 using TMPro;
 using UnityEngine;
 using VContainer;
-using Whisper;
-using Whisper.Utils;
 
 public class WhisperOutput : MonoBehaviour
 {
     [SerializeField] private TMP_Text _text;
 
-    [Inject] private MicrophoneRecord _microphoneRecord;
-    [Inject] private WhisperManager _whisper;
+    [Inject] private STTWhisper _whisper;
 
-    private async void Start()
+    private void Start()
     {
-        _whisper.OnNewSegment += segment => _text.text += segment.Text;
-
-        var stream = await _whisper.CreateStream(_microphoneRecord);
-        stream.OnResultUpdated += Stream_OnResultUpdated;
-        stream.StartStream();
+        _whisper.OnResultUpdated += OnResultUpdated;
     }
 
-    private void Stream_OnResultUpdated(string updatedResult)
+    private void OnResultUpdated(string updatedResult)
     {
         _text.text = updatedResult;
     }

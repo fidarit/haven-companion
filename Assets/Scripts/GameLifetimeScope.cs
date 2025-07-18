@@ -1,3 +1,4 @@
+using LLMUnity;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,8 +11,12 @@ public class GameLifetimeScope : LifetimeScope
 {
     protected override void Configure(IContainerBuilder builder)
     {
+        builder.RegisterEntryPoint<STTWhisper>().AsSelf();
+
         builder.RegisterComponentInHierarchy<WhisperManager>();
         builder.RegisterComponentInHierarchy<MicrophoneRecord>();
+        builder.RegisterComponentInHierarchy<LLMCharacter>();
+        builder.RegisterComponentInHierarchy<Agent>();
 
         InjectAllExistedGameObjects(builder);
     }
