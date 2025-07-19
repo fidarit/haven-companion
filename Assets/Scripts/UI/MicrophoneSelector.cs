@@ -1,29 +1,25 @@
-using System.Linq;
 using TMPro;
 using UnityEngine;
 using VContainer;
-using Whisper.Utils;
 
 public class MicrophoneSelector : MonoBehaviour
 {
     [SerializeField] private TMP_Dropdown _dropdown;
 
-    [Inject] private MicrophoneRecord _microphoneRecord;
+    [Inject] private MicrophoneSettings _microphoneSettings;
 
     private void Start()
     {
         _dropdown.ClearOptions();
-        _dropdown.AddOptions(_microphoneRecord.AvailableMicDevices.Prepend(_microphoneRecord.microphoneDefaultLabel).ToList());
+        _dropdown.AddOptions(_microphoneSettings.AvailableDevices);
+
+        var selectedDeviceIndex = _microphoneSettings.AvailableDevices.IndexOf(_microphoneSettings.SelectedDevice);
+        if (selectedDeviceIndex != -1)
+            _dropdown.value = selectedDeviceIndex;
     }
 
     public void OnSelectChanged()
     {
-        if (_microphoneRecord.IsRecording)
-            _microphoneRecord.StopRecord();
-
-        _microphoneRecord.SelectedMicDevice = _dropdown.options[_dropdown.value].text;
-
-        if (!_microphoneRecord.IsRecording)
-            _microphoneRecord.StartRecord();
+        _microphoneSettings.SelectedDevice = _dropdown.options[_dropdown.value].text;
     }
 }

@@ -12,6 +12,7 @@ public class GameLifetimeScope : LifetimeScope
     protected override void Configure(IContainerBuilder builder)
     {
         builder.RegisterEntryPoint<STTWhisper>().AsSelf();
+        builder.RegisterEntryPoint<MicrophoneSettings>().AsSelf();
 
         builder.RegisterComponentInHierarchy<WhisperManager>();
         builder.RegisterComponentInHierarchy<MicrophoneRecord>();

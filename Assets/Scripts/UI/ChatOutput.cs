@@ -16,7 +16,12 @@ public class ChatOutput : MonoBehaviour
         _agent.OnChatUpdate += OnChatUpdate;
     }
 
-    private void OnChatUpdate(IList<LLMUnity.ChatMessage> chat)
+    private void OnDestroy()
+    {
+        _agent.OnChatUpdate -= OnChatUpdate;
+    }
+
+    private void OnChatUpdate(IEnumerable<LLMUnity.ChatMessage> chat)
     {
         _text.text = string.Join(Environment.NewLine, chat
             .Where(t => t.role != "system")

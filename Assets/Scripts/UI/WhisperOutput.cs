@@ -13,6 +13,11 @@ public class WhisperOutput : MonoBehaviour
         _whisper.OnResultUpdated += OnResultUpdated;
     }
 
+    private void OnDestroy()
+    {
+        _whisper.OnResultUpdated -= OnResultUpdated;
+    }
+
     private void OnResultUpdated(string updatedResult)
     {
         _text.text = updatedResult;
