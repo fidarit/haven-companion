@@ -14,9 +14,11 @@ public class Agent : MonoBehaviour
     [Inject] private STTWhisper _whisper;
 
     private CancellationTokenSource _cancellationTokenSource;
+    private string _lastSegment;
 
-    private readonly List<string> _history = new();
-    private readonly List<string> _prepared = new();
+    private readonly List<string> _segments = new();
+    private readonly object _lock = new(); 
+    private readonly SemaphoreSlim _semaphore = new(0);
 
     public event OnStreamResultUpdatedDelegate OnAnswer;
     public event Action<IEnumerable<ChatMessage>> OnChatUpdate;
@@ -32,25 +34,29 @@ public class Agent : MonoBehaviour
     private void OnDestroy()
     {
         _cancellationTokenSource.Cancel();
+        _semaphore.Dispose();
     }
 
     private async Task BrainLoop(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            while (_prepared.Count == 0)
-                await Task.Delay(300, cancellationToken);
+            if (_segments.Count == 0) 
+                await _semaphore.WaitAsync(cancellationToken);
 
-            var query = string.Join(' ', _prepared);
-            _history.AddRange(_prepared);
-            _prepared.Clear();
+            string query;
+            lock (_lock)
+            {
+                query = string.Join(' ', _segments);
+                _segments.Clear();
+            }
 
-            Debug.LogWarning($"query: {query}");
+            Debug.Log($"query: {query}");
             OnChatUpdate?.Invoke(_character.chat.Append(new() { role = _character.playerName, content = query }));
 
             var result = await _character.Chat(query);
 
-            Debug.LogWarning($"answer: {result}");
+            Debug.Log($"answer: {result}");
 
             OnAnswer?.Invoke(result);
             OnChatUpdate?.Invoke(_character.chat);
@@ -59,8 +65,16 @@ public class Agent : MonoBehaviour
 
     private void OnSegmentFinished(WhisperResult segment)
     {
-        _prepared.Add(segment.Result);
+        if (string.IsNullOrWhiteSpace(segment.Result))
+            return;
 
-        Debug.LogWarning(string.Join(' ', _prepared));
+        if (segment.Result == _lastSegment)
+            return;
+
+        lock (_lock)
+            _segments.Add(segment.Result);
+
+        _lastSegment = segment.Result; 
+        _semaphore.Release();
     }
 }
